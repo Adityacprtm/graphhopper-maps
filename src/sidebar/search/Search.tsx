@@ -10,7 +10,7 @@ import PlainButton from '@/PlainButton'
 import { RoutingProfile } from '@/api/graphhopper'
 
 import AddressInput from '@/sidebar/search/AddressInput'
-import { convertToQueryText } from '@/Converters'
+import { MarkerComponent } from '@/map/Marker'
 
 export default function Search({
     points,
@@ -62,20 +62,28 @@ const SearchBox = ({
 }) => {
     return (
         <>
-            <div className={styles.dot} style={{ backgroundColor: point.color }} />
+            <div className={styles.markerContainer}>
+                <MarkerComponent color={point.color} />
+            </div>
             <div className={styles.searchBoxInput}>
                 <AddressInput
                     point={point}
                     autofocus={autofocus}
                     onCancel={() => console.log('cancel')}
-                    onAddressSelected={hit =>
+                    onAddressSelected={(queryText, coordinate) =>
                         Dispatcher.dispatch(
-                            new SetPoint({
-                                ...point,
-                                isInitialized: true,
-                                queryText: convertToQueryText(hit),
-                                coordinate: hit.point,
-                            })
+                            coordinate
+                                ? new SetPoint({
+                                      ...point,
+                                      isInitialized: true,
+                                      queryText: queryText,
+                                      coordinate: coordinate,
+                                  })
+                                : new SetPoint({
+                                      ...point,
+                                      isInitialized: false,
+                                      queryText: queryText,
+                                  })
                         )
                     }
                     onChange={onChange}
