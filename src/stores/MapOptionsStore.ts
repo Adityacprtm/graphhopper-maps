@@ -28,12 +28,19 @@ export interface StyleOption {
 export interface RasterStyle extends StyleOption {
     type: 'raster'
     url: string[]
+    tilePixelRatio?: number
 }
 
 export interface VectorStyle extends StyleOption {
     type: 'vector'
     url: string
 }
+
+const mediaQuery =
+    '(-webkit-min-device-pixel-ratio: 1.5),(min--moz-device-pixel-ratio: 1.5),(-o-min-device-pixel-ratio: 3/2),(min-resolution: 1.5dppx)'
+const isRetina = window.devicePixelRatio > 1 || (window.matchMedia && window.matchMedia(mediaQuery).matches)
+const tilePixelRatio = isRetina ? 2 : 1
+const retina2x = isRetina ? '@2x' : ''
 
 const mapTiler: VectorStyle = {
     name: 'MapTiler',
@@ -56,12 +63,16 @@ const osmOrg: RasterStyle = {
         'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png',
     ],
     attribution: osmAttribution,
+    maxZoom: 19,
 }
 const omniscale: RasterStyle = {
     name: 'Omniscale',
     type: 'raster',
-    url: ['https://maps.omniscale.net/v2/' + osApiKey + '/style.default/{z}/{x}/{y}.png'],
+    url: [
+        'https://maps.omniscale.net/v2/' + osApiKey + '/style.default/{z}/{x}/{y}.png' + (isRetina ? '?hq=true' : ''),
+    ],
     attribution: osmAttribution + ', &copy; <a href="https://maps.omniscale.com/" target="_blank">Omniscale</a>',
+    tilePixelRatio: tilePixelRatio,
 }
 const esriSatellite: RasterStyle = {
     name: 'Esri Satellite',
@@ -76,62 +87,69 @@ const tfTransport: RasterStyle = {
     name: 'TF Transport',
     type: 'raster',
     url: [
-        'https://a.tile.thunderforest.com/transport/{z}/{x}/{y}@2x.png?apikey=' + thunderforestApiKey,
-        'https://b.tile.thunderforest.com/transport/{z}/{x}/{y}@2x.png?apikey=' + thunderforestApiKey,
-        'https://c.tile.thunderforest.com/transport/{z}/{x}/{y}@2x.png?apikey=' + thunderforestApiKey,
+        'https://a.tile.thunderforest.com/transport/{z}/{x}/{y}' + retina2x + '.png?apikey=' + thunderforestApiKey,
+        'https://b.tile.thunderforest.com/transport/{z}/{x}/{y}' + retina2x + '.png?apikey=' + thunderforestApiKey,
+        'https://c.tile.thunderforest.com/transport/{z}/{x}/{y}' + retina2x + '.png?apikey=' + thunderforestApiKey,
     ],
     attribution:
         osmAttribution +
         ', <a href="https://www.thunderforest.com/maps/transport/" target="_blank">Thunderforest Transport</a>',
+    tilePixelRatio: tilePixelRatio,
 }
 const tfCycle: RasterStyle = {
     name: 'TF Cycle',
     type: 'raster',
     url: [
-        'https://a.tile.thunderforest.com/cycle/{z}/{x}/{y}@2x.png?apikey=' + thunderforestApiKey,
-        'https://b.tile.thunderforest.com/cycle/{z}/{x}/{y}@2x.png?apikey=' + thunderforestApiKey,
-        'https://c.tile.thunderforest.com/cycle/{z}/{x}/{y}@2x.png?apikey=' + thunderforestApiKey,
+        'https://a.tile.thunderforest.com/cycle/{z}/{x}/{y}' + retina2x + '.png?apikey=' + thunderforestApiKey,
+        'https://b.tile.thunderforest.com/cycle/{z}/{x}/{y}' + retina2x + '.png?apikey=' + thunderforestApiKey,
+        'https://c.tile.thunderforest.com/cycle/{z}/{x}/{y}' + retina2x + '.png?apikey=' + thunderforestApiKey,
     ],
     attribution:
         osmAttribution +
         ', <a href="https://www.thunderforest.com/maps/opencyclemap/" target="_blank">Thunderforest Cycle</a>',
+    tilePixelRatio: tilePixelRatio,
 }
 const tfOutdoors: RasterStyle = {
     name: 'TF Outdoors',
     type: 'raster',
     url: [
-        'https://a.tile.thunderforest.com/outdoors/{z}/{x}/{y}@2x.png?apikey=' + thunderforestApiKey,
-        'https://b.tile.thunderforest.com/outdoors/{z}/{x}/{y}@2x.png?apikey=' + thunderforestApiKey,
-        'https://c.tile.thunderforest.com/outdoors/{z}/{x}/{y}@2x.png?apikey=' + thunderforestApiKey,
+        'https://a.tile.thunderforest.com/outdoors/{z}/{x}/{y}' + retina2x + '.png?apikey=' + thunderforestApiKey,
+        'https://b.tile.thunderforest.com/outdoors/{z}/{x}/{y}' + retina2x + '.png?apikey=' + thunderforestApiKey,
+        'https://c.tile.thunderforest.com/outdoors/{z}/{x}/{y}' + retina2x + '.png?apikey=' + thunderforestApiKey,
     ],
     attribution:
         osmAttribution +
         ', <a href="https://www.thunderforest.com/maps/outdoors/" target="_blank">Thunderforest Outdoors</a>',
+    tilePixelRatio: tilePixelRatio,
 }
 const tfAtlas: RasterStyle = {
     name: 'TF Atlas',
     type: 'raster',
     url: [
-        'https://a.tile.thunderforest.com/atlas/{z}/{x}/{y}@2x.png?apikey=' + thunderforestApiKey,
-        'https://b.tile.thunderforest.com/atlas/{z}/{x}/{y}@2x.png?apikey=' + thunderforestApiKey,
-        'https://c.tile.thunderforest.com/atlas/{z}/{x}/{y}@2x.png?apikey=' + thunderforestApiKey,
+        'https://a.tile.thunderforest.com/atlas/{z}/{x}/{y}' + retina2x + '.png?apikey=' + thunderforestApiKey,
+        'https://b.tile.thunderforest.com/atlas/{z}/{x}/{y}' + retina2x + '.png?apikey=' + thunderforestApiKey,
+        'https://c.tile.thunderforest.com/atlas/{z}/{x}/{y}' + retina2x + '.png?apikey=' + thunderforestApiKey,
     ],
     attribution:
         osmAttribution + ', <a href="https://thunderforest.com/maps/atlas/" target="_blank">Thunderforest Atlas</a>',
+    tilePixelRatio: tilePixelRatio,
 }
+const path = '/raster/styles/kurviger-liberty/{z}/{x}/{y}' + retina2x + '.png?key=' + kurvigerApiKey
 const kurviger: RasterStyle = {
     name: 'Kurviger Liberty',
     type: 'raster',
     url: [
-        'https://a-tiles.mapilion.com/raster/styles/kurviger-liberty/{z}/{x}/{y}@2x.png?key=' + kurvigerApiKey,
-        'https://b-tiles.mapilion.com/raster/styles/kurviger-liberty/{z}/{x}/{y}@2x.png?key=' + kurvigerApiKey,
-        'https://c-tiles.mapilion.com/raster/styles/kurviger-liberty/{z}/{x}/{y}@2x.png?key=' + kurvigerApiKey,
-        'https://d-tiles.mapilion.com/raster/styles/kurviger-liberty/{z}/{x}/{y}@2x.png?key=' + kurvigerApiKey,
-        'https://e-tiles.mapilion.com/raster/styles/kurviger-liberty/{z}/{x}/{y}@2x.png?key=' + kurvigerApiKey,
+        'https://a-tiles.mapilion.com' + path,
+        'https://b-tiles.mapilion.com' + path,
+        'https://c-tiles.mapilion.com' + path,
+        'https://d-tiles.mapilion.com' + path,
+        'https://e-tiles.mapilion.com' + path,
     ],
     attribution:
         osmAttribution +
         ',&copy; <a href="https://kurviger.de/" target="_blank">Kurviger</a> &copy; <a href="https://mapilion.com/attribution" target="_blank">Mapilion</a> <a href="http://www.openmaptiles.org/" target="_blank">&copy; OpenMapTiles</a>',
+    maxZoom: 22,
+    tilePixelRatio: tilePixelRatio,
 }
 const mapillion: VectorStyle = {
     name: 'Mapilion',
@@ -150,12 +168,14 @@ const osmDe: RasterStyle = {
         'https://c.tile.openstreetmap.de/{z}/{x}/{y}.png',
     ],
     attribution: osmAttribution,
+    maxZoom: 18,
 }
 const lyrk: RasterStyle = {
     name: 'Lyrk',
     type: 'raster',
     url: ['https://tiles.lyrk.org/lr/{z}/{x}/{y}?apikey=6e8cfef737a140e2a58c8122aaa26077'],
     attribution: osmAttribution + ', <a href="https://geodienste.lyrk.de/">Lyrk</a>',
+    maxZoom: 15,
 }
 const wanderreitkarte: RasterStyle = {
     name: 'WanderReitKarte',
@@ -167,6 +187,7 @@ const wanderreitkarte: RasterStyle = {
         'https://topo4.wanderreitkarte.de/topo/{z}/{x}/{y}.png',
     ],
     attribution: osmAttribution + ', <a href="https://wanderreitkarte.de" target="_blank">WanderReitKarte</a>',
+    maxZoom: 18,
 }
 const sorbian: RasterStyle = {
     name: 'Sorbian Language',
@@ -176,11 +197,11 @@ const sorbian: RasterStyle = {
 }
 
 const styleOptions: StyleOption[] = [
-    mapTiler,
-    mapTilerSatellite,
-    osmOrg,
     omniscale,
+    osmOrg,
     esriSatellite,
+    mapTilerSatellite,
+    mapTiler,
     tfTransport,
     tfCycle,
     tfOutdoors,
@@ -188,10 +209,9 @@ const styleOptions: StyleOption[] = [
     kurviger,
     mapillion,
     osmDe,
-    // The original client has these but those options yield cors errors with mapbox yields a cors error
-    // lyrk,
-    // wanderreitkarte,
-    // This works but is extremely slow with mapbox
+    lyrk,
+    wanderreitkarte,
+    // This one is extremely slow with mapbox and openlayers?!
     // sorbian
 ]
 
@@ -203,7 +223,7 @@ export default class MapOptionsStore extends Store<MapOptionsStoreState> {
                 `Could not find tile layer specified in config: '${config.defaultTiles}', using default instead`
             )
         return {
-            selectedStyle: selectedStyle ? selectedStyle : mapTiler,
+            selectedStyle: selectedStyle ? selectedStyle : omniscale,
             styleOptions,
             isMapLoaded: false,
         }

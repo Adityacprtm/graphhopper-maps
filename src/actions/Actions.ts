@@ -3,7 +3,6 @@ import { Coordinate, QueryPoint } from '@/stores/QueryStore'
 import { ApiInfo, Bbox, Path, RoutingArgs, RoutingProfile, RoutingResult } from '@/api/graphhopper'
 import { StyleOption } from '@/stores/MapOptionsStore'
 import { PathDetailsPoint } from '@/stores/PathDetailsStore'
-import { ViewportStoreState } from '@/stores/ViewportStore'
 
 export class InfoReceived implements Action {
     readonly result: ApiInfo
@@ -38,6 +37,16 @@ export class AddPoint implements Action {
         this.atIndex = atIndex
         this.coordinate = coordinate
         this.isInitialized = isInitialized
+    }
+}
+
+export class SetRoutingParametersAtOnce implements Action {
+    readonly queryPoints: QueryPoint[]
+    readonly routingProfile: RoutingProfile
+
+    constructor(queryPoints: QueryPoint[], routingProfile: RoutingProfile) {
+        this.queryPoints = queryPoints
+        this.routingProfile = routingProfile
     }
 }
 
@@ -108,21 +117,21 @@ export class SelectMapStyle implements Action {
 
 export class MapIsLoaded implements Action {}
 
-export class SetViewport implements Action {
-    readonly viewport: ViewportStoreState
-
-    constructor(viewport: ViewportStoreState) {
-        this.viewport = viewport
-    }
-}
-
-export class SetViewportToPoint implements Action {
+export class ZoomMapToPoint implements Action {
     readonly coordinate: Coordinate
     readonly zoom: number
 
     constructor(coordinate: Coordinate, zoom: number) {
         this.coordinate = coordinate
         this.zoom = zoom
+    }
+}
+
+export class SetInitialBBox implements Action {
+    readonly bbox: Bbox
+
+    constructor(bbox: Bbox) {
+        this.bbox = bbox
     }
 }
 

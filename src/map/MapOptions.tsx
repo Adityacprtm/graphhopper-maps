@@ -6,8 +6,6 @@ import { SelectMapStyle } from '@/actions/Actions'
 import PlainButton from '@/PlainButton'
 import LayerImg from './layer-group-solid.svg'
 
-export interface MapOptionsProps {}
-
 export default function (props: MapOptionsStoreState) {
     const [isOpen, setIsOpen] = useState(false)
     return (
@@ -51,7 +49,7 @@ const Options = function ({ storeState, notifyChanged }: OptionsProps) {
                         defaultChecked={option === storeState.selectedStyle}
                         disabled={!storeState.isMapLoaded}
                     />
-                    <label htmlFor={option.name}>{option.name}</label>
+                    <label htmlFor={option.name}>{option.name + (option.type === 'vector' ? ' (Vector)' : '')}</label>
                 </div>
             ))}
         </div>
