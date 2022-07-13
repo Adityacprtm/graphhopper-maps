@@ -7,6 +7,8 @@ export interface RoutingArgs {
     readonly points: [number, number][]
     readonly profile: string
     readonly maxAlternativeRoutes: number
+    // todo: probably this should go somewhere else, see: https://github.com/graphhopper/graphhopper-maps/pull/193
+    readonly zoom: boolean
 }
 
 export interface RoutingRequest {
