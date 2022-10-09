@@ -1,5 +1,5 @@
 import { Action } from '@/stores/Dispatcher'
-import { Coordinate, QueryPoint } from '@/stores/QueryStore'
+import { Coordinate, CustomModel, QueryPoint } from '@/stores/QueryStore'
 import { ApiInfo, Bbox, Path, RoutingArgs, RoutingProfile, RoutingResult } from '@/api/graphhopper'
 import { StyleOption } from '@/stores/MapOptionsStore'
 import { PathDetailsPoint } from '@/stores/PathDetailsStore'
@@ -62,11 +62,41 @@ export class RemovePoint implements Action {
     }
 }
 
+export class MovePoint implements Action {
+    readonly point: QueryPoint
+    readonly newIndex: number
+
+    constructor(point: QueryPoint, newIndex: number) {
+        this.point = point
+        this.newIndex = newIndex
+    }
+}
+
 export class InvalidatePoint implements Action {
     readonly point: QueryPoint
 
     constructor(point: QueryPoint) {
         this.point = point
+    }
+}
+
+export class SetCustomModelBoxEnabled implements Action {
+    readonly enabled: boolean
+
+    constructor(enabled: boolean) {
+        this.enabled = enabled
+    }
+}
+
+export class SetCustomModel implements Action {
+    readonly customModel: CustomModel | null
+    readonly valid: boolean
+    readonly issueRouteRequest
+
+    constructor(customModel: CustomModel | null, valid: boolean, issueRouteRequest = false) {
+        this.customModel = customModel
+        this.valid = valid
+        this.issueRouteRequest = issueRouteRequest
     }
 }
 
@@ -117,6 +147,22 @@ export class SelectMapStyle implements Action {
     }
 }
 
+export class ToggleRoutingGraph implements Action {
+    readonly routingGraphEnabled: boolean
+
+    constructor(routingGraphEnabled: boolean) {
+        this.routingGraphEnabled = routingGraphEnabled
+    }
+}
+
+export class ToggleUrbanDensityLayer implements Action {
+    readonly urbanDensityEnabled: boolean
+
+    constructor(urbanDensityEnabled: boolean) {
+        this.urbanDensityEnabled = urbanDensityEnabled
+    }
+}
+
 export class MapIsLoaded implements Action {}
 
 export class ZoomMapToPoint implements Action {
@@ -126,6 +172,14 @@ export class ZoomMapToPoint implements Action {
     constructor(coordinate: Coordinate, zoom: number) {
         this.coordinate = coordinate
         this.zoom = zoom
+    }
+}
+
+export class QueryOSM implements Action {
+    readonly coordinate: Coordinate
+
+    constructor(coordinate: Coordinate) {
+        this.coordinate = coordinate
     }
 }
 
@@ -158,5 +212,15 @@ export class PathDetailsElevationSelected implements Action {
 
     constructor(segments: Coordinate[][]) {
         this.segments = segments
+    }
+}
+
+export class RoutingGraphHover implements Action {
+    readonly point: Coordinate | null
+    readonly properties: object
+
+    constructor(point: Coordinate | null, properties: object) {
+        this.point = point
+        this.properties = properties
     }
 }

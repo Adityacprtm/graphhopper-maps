@@ -1,6 +1,6 @@
 import Store from '@/stores/Store'
 import { Action } from '@/stores/Dispatcher'
-import { MapIsLoaded, SelectMapStyle } from '@/actions/Actions'
+import { MapIsLoaded, SelectMapStyle, ToggleRoutingGraph, ToggleUrbanDensityLayer } from '@/actions/Actions'
 import config from 'config'
 
 const osApiKey = config.keys.omniscale
@@ -15,6 +15,8 @@ export interface MapOptionsStoreState {
     styleOptions: StyleOption[]
     selectedStyle: StyleOption
     isMapLoaded: boolean
+    routingGraphEnabled: boolean
+    urbanDensityEnabled: boolean
 }
 
 export interface StyleOption {
@@ -216,7 +218,11 @@ const styleOptions: StyleOption[] = [
 ]
 
 export default class MapOptionsStore extends Store<MapOptionsStoreState> {
-    protected getInitialState(): MapOptionsStoreState {
+    constructor() {
+        super(MapOptionsStore.getInitialState())
+    }
+
+    private static getInitialState(): MapOptionsStoreState {
         const selectedStyle = styleOptions.find(s => s.name === config.defaultTiles)
         if (!selectedStyle)
             console.warn(
@@ -225,6 +231,8 @@ export default class MapOptionsStore extends Store<MapOptionsStoreState> {
         return {
             selectedStyle: selectedStyle ? selectedStyle : omniscale,
             styleOptions,
+            routingGraphEnabled: false,
+            urbanDensityEnabled: false,
             isMapLoaded: false,
         }
     }
@@ -234,6 +242,16 @@ export default class MapOptionsStore extends Store<MapOptionsStoreState> {
             return {
                 ...state,
                 selectedStyle: action.styleOption,
+            }
+        } else if (action instanceof ToggleRoutingGraph) {
+            return {
+                ...state,
+                routingGraphEnabled: action.routingGraphEnabled,
+            }
+        } else if (action instanceof ToggleUrbanDensityLayer) {
+            return {
+                ...state,
+                urbanDensityEnabled: action.urbanDensityEnabled,
             }
         } else if (action instanceof MapIsLoaded) {
             return {

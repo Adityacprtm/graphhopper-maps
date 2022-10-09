@@ -2,6 +2,7 @@ declare module '*.css'
 declare module '*.svg'
 declare module '*.png'
 declare module 'heightgraph/src/heightgraph'
+declare module 'custom-model-editor/src/index'
 
 declare module 'config' {
     const api: string
@@ -13,6 +14,7 @@ declare module 'config' {
         thunderforest: string,
         kurviger: string,
     }
+    const routingGraphLayerAllowed: boolean
     const extraProfiles: object
 }
 declare module 'react-responsive' {

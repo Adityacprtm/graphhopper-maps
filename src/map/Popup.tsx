@@ -1,11 +1,13 @@
 import React from 'react'
 import { coordinateToText } from '@/Converters'
 import styles from './Popup.module.css'
-import { Coordinate, QueryPoint, QueryPointType } from '@/stores/QueryStore'
+import QueryStore, { Coordinate, QueryPoint, QueryPointType } from '@/stores/QueryStore'
 import Dispatcher from '@/stores/Dispatcher'
-import { AddPoint, SetPoint, ZoomMapToPoint } from '@/actions/Actions'
+import { AddPoint, QueryOSM, SetPoint, ZoomMapToPoint } from '@/actions/Actions'
 import { RouteStoreState } from '@/stores/RouteStore'
 import { findNextWayPoint } from '@/map/findNextWayPoint'
+import { tr } from '@/translation/Translation'
+import { MarkerComponent } from '@/map/Marker'
 
 export function PopupComponent({
     coordinate,
@@ -71,29 +73,49 @@ export function PopupComponent({
     return (
         <div className={styles.wrapper}>
             <button className={styles.entry} onClick={() => dispatchSetPoint(queryPoints[0], coordinate)}>
-                From here
+                <div>
+                    <MarkerComponent size={16} color={QueryStore.getMarkerColor(QueryPointType.From)} />
+                </div>
+                <span>{tr('set_start')}</span>
             </button>
             <button
                 className={styles.entry}
                 disabled={disableViaPoint(queryPoints)}
                 onClick={() => setViaPoint(queryPoints, route)}
             >
-                Via here
+                <div>
+                    <MarkerComponent size={16} color={QueryStore.getMarkerColor(QueryPointType.Via)} />
+                </div>
+                <span>{tr('set_intermediate')}</span>
             </button>
             <button
+                style={{ paddingBottom: '10px' }}
                 className={styles.entry}
                 onClick={() => dispatchSetPoint(queryPoints[queryPoints.length - 1], coordinate)}
             >
-                To here
+                <div>
+                    <MarkerComponent size={16} color={QueryStore.getMarkerColor(QueryPointType.To)} />
+                </div>
+                <span>{tr('set_end')}</span>
             </button>
             <button
+                style={{ borderTop: '1px solid lightgray', paddingTop: '10px' }}
                 className={styles.entry}
                 onClick={() => {
                     onSelect()
                     Dispatcher.dispatch(new ZoomMapToPoint(coordinate, 8))
                 }}
             >
-                Center map
+                {tr('center_map')}
+            </button>
+            <button
+                className={styles.entry}
+                onClick={() => {
+                    onSelect()
+                    Dispatcher.dispatch(new QueryOSM(coordinate))
+                }}
+            >
+                {tr('query_osm')}
             </button>
         </div>
     )

@@ -1,4 +1,5 @@
 import { LineString } from 'geojson'
+import { CustomModel } from '@/stores/QueryStore'
 
 // minLon, minLat, maxLon, maxLat
 export type Bbox = [number, number, number, number]
@@ -9,6 +10,7 @@ export interface RoutingArgs {
     readonly maxAlternativeRoutes: number
     // todo: probably this should go somewhere else, see: https://github.com/graphhopper/graphhopper-maps/pull/193
     readonly zoom: boolean
+    readonly customModel: CustomModel | null
 }
 
 export interface RoutingRequest {
@@ -26,6 +28,7 @@ export interface RoutingRequest {
     algorithm?: 'alternative_route' | 'round_trip'
     snap_preventions?: string[]
     details?: string[]
+    custom_model?: CustomModel
 }
 
 export interface ErrorResponse {
@@ -49,6 +52,7 @@ export interface ApiInfo {
     readonly bbox: Bbox
     readonly elevation: boolean
     readonly profiles: RoutingProfile[]
+    readonly encoded_values: object[]
 }
 
 export interface RoutingProfile {
@@ -75,6 +79,7 @@ export interface BasePath {
     readonly instructions: Instruction[]
     readonly details: Details
     readonly points_order: number[]
+    readonly description: string
 }
 
 export interface Instruction {
@@ -90,6 +95,10 @@ interface Details {
     readonly street_name: [number, number, string][]
     readonly toll: [number, number, string][]
     readonly max_speed: [number, number, number][]
+    readonly road_class: [number, number, string][]
+    readonly road_environment: [number, number, string][]
+    readonly track_type: [number, number, string][]
+    readonly country: [number, number, string][]
 }
 
 export interface GeocodingResult {

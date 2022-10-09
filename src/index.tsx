@@ -1,5 +1,6 @@
 import React from 'react'
-import ReactDOM from 'react-dom'
+import { StrictMode } from 'react'
+import { createRoot } from 'react-dom/client'
 
 import { setTranslation } from '@/translation/Translation'
 import App from '@/App'
@@ -8,6 +9,7 @@ import {
     getErrorStore,
     getMapOptionsStore,
     getPathDetailsStore,
+    getMapFeatureStore,
     getQueryStore,
     getRouteStore,
     setStores,
@@ -24,13 +26,18 @@ import * as config from 'config'
 import { getApi, setApi } from '@/api/Api'
 import MapActionReceiver from '@/stores/MapActionReceiver'
 import { createMap, getMap, setMap } from '@/map/map'
+import MapFeatureStore from '@/stores/MapFeatureStore'
 
-let locale = new URL(window.location.href).searchParams.get('locale')
+const url = new URL(window.location.href)
+const locale = url.searchParams.get('locale')
 setTranslation(locale || navigator.language)
 
-// set up state management
-setApi(config.api, getApiKey())
-const queryStore = new QueryStore(getApi())
+// use graphhopper api key from url or try using one from the config
+const apiKey = url.searchParams.has('key') ? url.searchParams.get('key') : config.keys.graphhopper
+setApi(config.api, apiKey)
+
+const initialCustomModelStr = url.searchParams.get('custom_model')
+const queryStore = new QueryStore(getApi(), initialCustomModelStr)
 const routeStore = new RouteStore(queryStore)
 
 setStores({
@@ -40,6 +47,7 @@ setStores({
     errorStore: new ErrorStore(),
     mapOptionsStore: new MapOptionsStore(),
     pathDetailsStore: new PathDetailsStore(),
+    mapFeatureStore: new MapFeatureStore(),
 })
 
 setMap(createMap())
@@ -51,6 +59,7 @@ Dispatcher.register(getApiInfoStore())
 Dispatcher.register(getErrorStore())
 Dispatcher.register(getMapOptionsStore())
 Dispatcher.register(getPathDetailsStore())
+Dispatcher.register(getMapFeatureStore())
 
 // register map action receiver
 const smallScreenMediaQuery = window.matchMedia('(max-width: 44rem)')
@@ -65,15 +74,14 @@ const navBar = new NavBar(getQueryStore(), getMapOptionsStore())
 navBar.parseUrlAndReplaceQuery()
 
 // create a div which holds the app and render the 'App' component
-const root = document.createElement('div') as HTMLDivElement
-root.id = 'root'
-root.style.height = '100%'
-document.body.appendChild(root)
+const rootDiv = document.createElement('div') as HTMLDivElement
+rootDiv.id = 'root'
+rootDiv.style.height = '100%'
+document.body.appendChild(rootDiv)
 
-ReactDOM.render(<App />, root)
-
-function getApiKey() {
-    const url = new URL(window.location.href)
-    // use graphhopper api key from url or try using one from the config
-    return url.searchParams.has('key') ? url.searchParams.get('key') : config.keys.graphhopper
-}
+const root = createRoot(rootDiv)
+root.render(
+    // <StrictMode>
+    <App />
+    // </StrictMode>
+)

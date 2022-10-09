@@ -26,7 +26,7 @@ export default function ContextMenu({ map, route, queryPoints }: ContextMenuProp
         setOverlay(overlay)
         map.addOverlay(overlay)
 
-        const onMenuEvent = (e: any) => {
+        function openContextMenu(e: any) {
             e.preventDefault()
             const coordinate = map.getEventCoordinate(e)
             const lonLat = toLonLat(coordinate)
@@ -34,14 +34,27 @@ export default function ContextMenu({ map, route, queryPoints }: ContextMenuProp
             overlay.setPosition(coordinate)
         }
 
+        const longTouchHandler = new LongTouchHandler(e => openContextMenu(e))
+
         map.once('change:target', () => {
             // we cannot listen to right-click simply using map.on('contextmenu') and need to add the listener to
             // the map container instead
             // https://github.com/openlayers/openlayers/issues/12512#issuecomment-879403189
-            map.getTargetElement().addEventListener('contextmenu', e => onMenuEvent(e))
+            map.getTargetElement().addEventListener('contextmenu', openContextMenu)
+            map.getTargetElement().addEventListener('touchstart', e => longTouchHandler.onTouchStart(e))
+            map.getTargetElement().addEventListener('touchmove', () => longTouchHandler.onTouchEnd())
+            map.getTargetElement().addEventListener('touchend', () => longTouchHandler.onTouchEnd())
+
+            // remove the popup when the map is clicked elsewhere, see #235
+            map.getTargetElement().addEventListener('click', () => {
+                overlay?.setPosition(undefined)
+            })
         })
-        // remove the popup when the map is clicked elsewhere
-        map.on('click', () => overlay.setPosition(undefined))
+
+        return () => {
+            map.getTargetElement().removeEventListener('contextmenu', openContextMenu)
+            map.removeOverlay(overlay)
+        }
     }, [map])
     return (
         <div className={styles.popup} ref={container as any}>
@@ -60,6 +73,7 @@ export default function ContextMenu({ map, route, queryPoints }: ContextMenuProp
     )
 }
 
+// See #229
 class LongTouchHandler {
     private readonly callback: (e: any) => void
     private currentTimeout: number = 0
@@ -75,7 +89,6 @@ class LongTouchHandler {
             console.log('long touch')
             if (this.currentEvent) this.callback(this.currentEvent)
         }, 500)
-        console.log(this.currentEvent)
     }
 
     onTouchEnd() {
