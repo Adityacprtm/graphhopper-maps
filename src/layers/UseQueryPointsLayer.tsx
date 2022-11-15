@@ -1,6 +1,6 @@
 import { Feature, Map } from 'ol'
 import { QueryPoint, QueryPointType } from '@/stores/QueryStore'
-import React, { useEffect } from 'react'
+import { useEffect } from 'react'
 import VectorLayer from 'ol/layer/Vector'
 import VectorSource from 'ol/source/Vector'
 import { Point } from 'ol/geom'
@@ -20,6 +20,10 @@ export default function useQueryPointsLayer(map: Map, queryPoints: QueryPoint[])
         const queryPointsLayer = addQueryPointsLayer(map, queryPoints)
         removeDragInteractions(map)
         addDragInteractions(map, queryPointsLayer)
+        return () => {
+            removeQueryPoints(map)
+            removeDragInteractions(map)
+        }
     }, [map, queryPoints])
 }
 
@@ -81,7 +85,11 @@ function addDragInteractions(map: Map, queryPointsLayer: VectorLayer<any>) {
         source: queryPointsLayer.getSource(),
         style: [],
     })
+    modify.on('modifystart', e => {
+        map.getViewport().style.cursor = 'grabbing'
+    })
     modify.on('modifyend', e => {
+        map.getViewport().style.cursor = 'default'
         const feature = (e as any).features.getArray()[0]
         const point = feature.get('gh:query_point')
         const coordinateLonLat = toLonLat(feature.getGeometry().getCoordinates())

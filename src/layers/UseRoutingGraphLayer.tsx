@@ -1,5 +1,5 @@
 import { Feature, Map } from 'ol'
-import React, { useEffect } from 'react'
+import { useEffect } from 'react'
 import VectorTileSource from 'ol/source/VectorTile'
 import VectorTileLayer from 'ol/layer/VectorTile'
 import { MVT } from 'ol/format'
@@ -59,7 +59,9 @@ function addRoutingGraphLayer(map: Map) {
         declutter: true,
         source: new VectorTileSource({
             attributions: '',
-            format: new MVT(),
+            format: new MVT({
+                featureClass: Feature,
+            }),
             url: `${config.api}mvt/{z}/{x}/{y}.mvt`,
         }),
         style: ((feature: Feature, resolution: number) =>

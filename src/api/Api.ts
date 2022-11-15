@@ -1,5 +1,5 @@
 import Dispatcher from '@/stores/Dispatcher'
-import { ErrorAction, InfoReceived, RouteRequestFailed, RouteRequestSuccess } from '@/actions/Actions'
+import { RouteRequestFailed, RouteRequestSuccess } from '@/actions/Actions'
 import {
     ApiInfo,
     Bbox,
@@ -24,13 +24,11 @@ interface ApiProfile {
 export default interface Api {
     info(): Promise<ApiInfo>
 
-    infoWithDispatch(): void
-
     route(args: RoutingArgs): Promise<RoutingResult>
 
     routeWithDispatch(args: RoutingArgs): void
 
-    geocode(query: string): Promise<GeocodingResult>
+    geocode(query: string, provider: string): Promise<GeocodingResult>
 }
 
 let api: Api | undefined
@@ -70,17 +68,10 @@ export class ApiImpl implements Api {
         }
     }
 
-    infoWithDispatch() {
-        this.info()
-            .then(result => Dispatcher.dispatch(new InfoReceived(result)))
-            .catch(e => Dispatcher.dispatch(new ErrorAction(e.message)))
-    }
-
-    async geocode(query: string) {
+    async geocode(query: string, provider: string) {
         const url = this.getURLWithKey('geocode')
         url.searchParams.append('q', query)
-        url.searchParams.append('provider', 'default')
-
+        url.searchParams.append('provider', provider)
         const langAndCountry = getTranslation().getLang().split('_')
         url.searchParams.append('locale', langAndCountry.length > 0 ? langAndCountry[0] : 'en')
 
@@ -164,17 +155,8 @@ export class ApiImpl implements Api {
             locale: getTranslation().getLang(),
             optimize: 'false',
             points_encoded: true,
-            snap_preventions: ['ferry'],
-            details: [
-                'road_class',
-                'road_environment',
-                'surface',
-                'max_speed',
-                'average_speed',
-                'toll',
-                'track_type',
-                'country',
-            ],
+            snap_preventions: config.request?.snapPreventions ? config.request.snapPreventions : [],
+            details: config.request?.details ? config.request.details : [],
             ...(config.extraProfiles ? (config.extraProfiles as any)[args.profile] : {}),
         }
 
@@ -208,7 +190,7 @@ export class ApiImpl implements Api {
         }
 
         // group similarly named profiles into the following predefined order
-        let reservedOrder = ['car', 'truck', 'scooter', 'foot', 'hike', 'bike']
+        const reservedOrder = ['car', 'truck', 'scooter', 'foot', 'hike', 'bike']
         profiles.sort((a, b) => {
             let idxa = reservedOrder.findIndex(str => a.name.indexOf(str) >= 0)
             let idxb = reservedOrder.findIndex(str => b.name.indexOf(str) >= 0)
@@ -325,8 +307,14 @@ export class ApiImpl implements Api {
                 array.push([lng * 1e-5, lat * 1e-5, ele / 100])
             } else array.push([lng * 1e-5, lat * 1e-5])
         }
-        // var end = new Date().getTime();
-        // console.log("decoded " + len + " coordinates in " + ((end - start) / 1000) + "s");
         return array
+    }
+
+    public static isBikeLike(profile: string) {
+        return profile.includes('mtb') || profile.includes('bike')
+    }
+
+    public static isMotorVehicle(profile: string) {
+        return profile.includes('car') || profile.includes('truck') || profile.includes('scooter')
     }
 }

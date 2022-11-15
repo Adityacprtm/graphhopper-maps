@@ -1,7 +1,6 @@
 import { Action } from '@/stores/Dispatcher'
 import { Coordinate, CustomModel, QueryPoint } from '@/stores/QueryStore'
 import { ApiInfo, Bbox, Path, RoutingArgs, RoutingProfile, RoutingResult } from '@/api/graphhopper'
-import { StyleOption } from '@/stores/MapOptionsStore'
 import { PathDetailsPoint } from '@/stores/PathDetailsStore'
 
 export class InfoReceived implements Action {
@@ -42,13 +41,11 @@ export class AddPoint implements Action {
     }
 }
 
-export class SetRoutingParametersAtOnce implements Action {
+export class SetQueryPoints implements Action {
     readonly queryPoints: QueryPoint[]
-    readonly routingProfile: RoutingProfile
 
-    constructor(queryPoints: QueryPoint[], routingProfile: RoutingProfile) {
+    constructor(queryPoints: QueryPoint[]) {
         this.queryPoints = queryPoints
-        this.routingProfile = routingProfile
     }
 }
 
@@ -139,11 +136,11 @@ export class SetSelectedPath implements Action {
 
 export class DismissLastError implements Action {}
 
-export class SelectMapStyle implements Action {
-    readonly styleOption: StyleOption
+export class SelectMapLayer implements Action {
+    readonly layer: string
 
-    constructor(styleOption: StyleOption) {
-        this.styleOption = styleOption
+    constructor(layer: string) {
+        this.layer = layer
     }
 }
 
@@ -172,14 +169,6 @@ export class ZoomMapToPoint implements Action {
     constructor(coordinate: Coordinate, zoom: number) {
         this.coordinate = coordinate
         this.zoom = zoom
-    }
-}
-
-export class QueryOSM implements Action {
-    readonly coordinate: Coordinate
-
-    constructor(coordinate: Coordinate) {
-        this.coordinate = coordinate
     }
 }
 
@@ -224,3 +213,15 @@ export class RoutingGraphHover implements Action {
         this.properties = properties
     }
 }
+
+export class InstructionClicked implements Action {
+    readonly coordinate: Coordinate | null
+    readonly text: string
+
+    constructor(point: Coordinate | null, text: string) {
+        this.coordinate = point
+        this.text = text
+    }
+}
+
+export class ToggleDistanceUnits implements Action {}

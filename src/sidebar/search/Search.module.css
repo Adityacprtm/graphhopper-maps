@@ -1,10 +1,13 @@
+.searchBoxParent {
+    margin: 0.1rem 0.5rem 0.5rem 0.5rem;
+}
+
 .searchBox {
     display: grid;
     grid-template-columns: auto 1fr auto;
     align-items: center;
     grid-gap: 0.5rem;
-    padding-bottom: 0.5em;
-    margin: 0.5rem;
+    margin: 0.5rem 0.1rem 0.7rem 0;
 }
 
 .searchBoxScrollable {
@@ -23,28 +26,97 @@
     justify-self: center;
 }
 
-.addSearchBox:hover path {
+.markerContainer {
+    grid-column: 1 / span 1;
+    align-self: center;
+    justify-self: center;
+    width: 1rem;
+}
+
+.markerContainer > svg {
+    height: 100%;
+    width: 100%;
+}
+
+.searchOptions {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    margin: 1rem 0;
+}
+
+.geocodingResults {
+    grid-column: 1 / span 3;
+}
+
+.lastSearchLine {
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-end;
+    margin-right: 2px;
+}
+
+.addSearchBox:hover path,
+.infoButton:hover path {
     fill: black;
+}
+
+.infoButton:active path,
+.addSearchBox:active path,
+.markerTarget:active path {
+    fill: lightgray;
+}
+
+.infoButton {
+    padding-left: 7px;
+}
+
+.infoButton svg {
+    width: 19px;
+    height: 19px;
+}
+
+.infoLine {
+    padding: 1.5em 4px 2px 2px;
+    font-size: 14px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.infoLine a {
+    color: gray;
+    text-decoration: none;
+}
+
+.infoLine a:hover {
+    color: black;
+}
+
+.addSearchBox svg {
+    width: 18px;
+    height: 18px;
 }
 
 .addSearchBox svg {
     color: #adadad;
-    width: 1.1rem;
-    float: left;
-    padding: 0.2em 1.25em 0.2em 0;
-}
-
-.addSearchBox div {
-    float: left;
-    padding-top: 0.2em;
+    padding: 0 1.25em 0 0;
 }
 
 .addSearchBox {
-    width: 10em;
-    padding-top: 0.3em;
-    grid-column: 1 / span 2;
-    justify-self: start;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: row;
+}
+
+.addSearchBox,
+.mikm {
+    color: gray;
     font-size: 14px;
+}
+
+.infoButton svg {
+    fill: #adadad;
 }
 
 .markerContainer:hover svg {
@@ -66,10 +138,6 @@
 
 .markerTarget:hover svg {
     fill: black;
-}
-
-.markerTarget:active svg {
-    fill: lightgray;
 }
 
 .markerContainer > svg,
@@ -94,15 +162,4 @@
 
 .hide {
     visibility: hidden;
-}
-
-.searchOptions {
-    display: flex;
-    flex-direction: row;
-    justify-content: space-between;
-    margin: 1rem 0;
-}
-
-.geocodingResults {
-    grid-column: 1 / span 3;
 }

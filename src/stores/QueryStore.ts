@@ -1,5 +1,5 @@
 import { coordinateToText, metersToText } from '@/Converters'
-import Api from '@/api/Api'
+import Api, { ApiImpl } from '@/api/Api'
 import Store from '@/stores/Store'
 import Dispatcher, { Action } from '@/stores/Dispatcher'
 import {
@@ -15,7 +15,7 @@ import {
     SetCustomModel,
     SetCustomModelBoxEnabled,
     SetPoint,
-    SetRoutingParametersAtOnce,
+    SetQueryPoints,
     SetVehicleProfile,
 } from '@/actions/Actions'
 import { RoutingArgs, RoutingProfile } from '@/api/graphhopper'
@@ -187,8 +187,8 @@ export default class QueryStore extends Store<QueryStoreState> {
             }
 
             return this.routeIfReady(newState)
-        } else if (action instanceof SetRoutingParametersAtOnce) {
-            // make sure that some things are set correclty, regardless of what was passed in here.
+        } else if (action instanceof SetQueryPoints) {
+            // make sure that some things are set correctly, regardless of what was passed in here.
             const queryPoints = action.queryPoints.map((point, i) => {
                 const type = QueryStore.getPointType(i, action.queryPoints.length)
                 const queryText =
@@ -201,13 +201,24 @@ export default class QueryStore extends Store<QueryStoreState> {
                     queryText: queryText,
                 }
             })
+            // make sure there are always at least two input boxes
+            while (queryPoints.length < 2) {
+                const type = QueryStore.getPointType(queryPoints.length, 2)
+                queryPoints.push({
+                    id: queryPoints.length,
+                    type: type,
+                    color: QueryStore.getMarkerColor(type),
+                    queryText: '',
+                    isInitialized: false,
+                    coordinate: { lat: 0, lng: 0 },
+                })
+            }
             const nextId = state.nextQueryPointId + queryPoints.length
 
             return this.routeIfReady({
                 ...state,
                 queryPoints: queryPoints,
                 nextQueryPointId: nextId,
-                routingProfile: action.routingProfile,
             })
         } else if (action instanceof RemovePoint) {
             const newPoints = state.queryPoints
@@ -278,8 +289,8 @@ export default class QueryStore extends Store<QueryStoreState> {
     private routeIfReady(state: QueryStoreState): QueryStoreState {
         if (QueryStore.isReadyToRoute(state)) {
             let requests
+            const maxDistance = getMaxDistance(state.queryPoints)
             if (state.customModelEnabled) {
-                const maxDistance = getMaxDistance(state.queryPoints)
                 if (maxDistance < 200_000) {
                     // Use a single request, possibly including alternatives when custom models are enabled.
                     requests = [QueryStore.buildRouteRequest(state)]
@@ -298,7 +309,8 @@ export default class QueryStore extends Store<QueryStoreState> {
                         new ErrorAction(
                             'Using the custom model feature is unfortunately not ' +
                                 'possible when the request points are further than ' +
-                                metersToText(500_000) +
+                                // todo: use settings#showDistanceInMiles, but not sure how to use state from another store here
+                                metersToText(500_000, false) +
                                 ' apart.'
                         )
                     )
@@ -313,7 +325,11 @@ export default class QueryStore extends Store<QueryStoreState> {
                     }),
                 ]
                 // ... and then a second, slower request including alternatives if they are enabled.
-                if (state.queryPoints.length === 2 && state.maxAlternativeRoutes > 1)
+                if (
+                    state.queryPoints.length === 2 &&
+                    state.maxAlternativeRoutes > 1 &&
+                    (ApiImpl.isMotorVehicle(state.routingProfile.name) || maxDistance < 500_000)
+                )
                     requests.push(QueryStore.buildRouteRequest(state))
             }
 
@@ -351,7 +367,7 @@ export default class QueryStore extends Store<QueryStoreState> {
     private static movePoint(points: QueryPoint[], point: QueryPoint, newIndex: number): QueryPoint[] {
         if (newIndex < 0) return points
 
-        let newPoints = points.filter((p, index) => {
+        const newPoints = points.filter((p, index) => {
             if (p.id == point.id) {
                 if (index < newIndex) newIndex-- // index adjustment is important
                 return false

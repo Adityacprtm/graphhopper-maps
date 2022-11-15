@@ -1,19 +1,44 @@
 # GraphHopper Maps
 
-This is the user interface for the [GraphHopper routing engine](https://github.com/graphhopper/graphhopper). It was rewritten from scratch and will replace the [jquery-based maps UI](https://github.com/graphhopper/graphhopper#graphhopper-maps).
+A user interface for the [GraphHopper routing engine](https://github.com/graphhopper/graphhopper) released under the Apache License 2.0.
 
-Try it at [graphhopper.com/maps2](https://graphhopper.com/maps2/).
+[Try it out](https://graphhopper.com/maps/)!
 
-Get started:
+[![GraphHopper Maps route planner](https://www.graphhopper.com/wp-content/uploads/2022/10/maps2-1024x661.png)](https://graphhopper.com/maps/)
 
- * copy the config.js to config-local.js and enter your GraphHopper API key for routing (get it at https://www.graphhopper.com)
-   or change the 'api' field and point it at your [local GraphHopper server](https://github.com/graphhopper/graphhopper), e.g. `api: http://localhost:8989/`. Ensure that the api ends with a slash.
- * optional: setup api keys for the other tile providers, see MapOptionsStore.ts. you can also change the default tile layer in config-local.js
- * make sure node/npm is installed. We recommend using the gallium LTS (node v16.17.0 & npm v8.15.0)
+
+## Start development:
+
+ * Clone this repository.
+ * Make sure node/npm is installed. We recommend using the gallium LTS (node v16.17.0 & npm v8.15.0).
  * npm install
  * npm run serve
- * open your browser at http://0.0.0.0:3000/
+ * Open your browser at http://0.0.0.0:3000/.
+ * Start development. The browser will update automatically when you change the code.
+ * Format the code and run the tests using `npm run format` and `npm run test`.
+ * Fork the repository and create a pull request. Contributions are welcome. Feel free to discuss your changes in our
+   [forum](https://discuss.graphhopper.com/) or the GitHub [issues](https://github.com/graphhopper/graphhopper-maps/issues).
+ * You can build the production bundle using `npm run build`.
 
-Development deployments are available at https://graphhopper.com/maps-dev/something/. (Replace 'something' with the actual branch name) 
+## Help with translations:
 
-There is also [an experimental `navi` branch](https://github.com/graphhopper/graphhopper-maps/tree/navi) that implements turn-by-turn navigation [directly in the browser](https://navi.graphhopper.org).
+GraphHopper Maps is translated into many languages and you can help improve GraphHopper by adding or improving your language! See [this spreadsheet](https://docs.google.com/spreadsheets/d/10HKSFmxGVEIO92loVQetVmjXT0qpf3EA2jxuQSSYTdU/edit?pli=1#gid=0) to create a new or improve an existing language. Let us know if you changed something or submit a pull request with your changes after the following steps:
+
+ * Edit the spreadsheet
+ * Run `python3 update-translations.py`
+ * Review your changes via e.g. http://localhost:3000/?locale=en and with `git diff`. Make sure that is the only one with `git status`.
+ 
+Please note that the translations the server-side turn instructions are located in [a different repository](https://github.com/graphhopper/graphhopper/blob/master/docs/core/translations.md).
+
+## Advanced configuration
+
+You can point the app to a different url, like a [local GraphHopper server](https://github.com/graphhopper/graphhopper), 
+set your own API keys for the different map tile providers and more in the [config.js](./config.js) file. For such changes it is
+best to create a copy of this file called `config-local.js` which will be ignored by git.
+
+## Further Notes
+
+Every branch of this repository can be tested at https://graphhopper.com/maps-dev/<branch_name>/ 
+
+There is also [an experimental `navi` branch](https://github.com/graphhopper/graphhopper-maps/tree/navi) that implements
+turn-by-turn navigation [directly in the browser](https://navi.graphhopper.org).
