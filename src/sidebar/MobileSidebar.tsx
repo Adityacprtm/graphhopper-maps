@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { QueryPoint, QueryPointType, QueryStoreState } from '@/stores/QueryStore'
+import { QueryPoint, QueryPointType, QueryStoreState, RequestState } from '@/stores/QueryStore'
 import { RouteStoreState } from '@/stores/RouteStore'
-import { ApiInfo } from '@/api/graphhopper'
 import { ErrorStoreState } from '@/stores/ErrorStore'
 import styles from './MobileSidebar.module.css'
 import Search from '@/sidebar/search/Search'
@@ -9,15 +8,19 @@ import ErrorMessage from '@/sidebar/ErrorMessage'
 import { useMediaQuery } from 'react-responsive'
 import { MarkerComponent } from '@/map/Marker'
 import RoutingProfiles from '@/sidebar/search/routingProfiles/RoutingProfiles'
+import OpenInputsIcon from './unfold.svg'
+import CloseInputsIcon from './unfold_less.svg'
+import CustomModelBox from '@/sidebar/CustomModelBox'
 
 type MobileSidebarProps = {
     query: QueryStoreState
     route: RouteStoreState
-    info: ApiInfo
     error: ErrorStoreState
+    encodedValues: object[]
 }
 
-export default function ({ query, route, info, error }: MobileSidebarProps) {
+export default function ({ query, route, error, encodedValues }: MobileSidebarProps) {
+    const [showCustomModelBox, setShowCustomModelBox] = useState(false)
     // the following three elements control, whether the small search view is displayed
     const isShortScreen = useMediaQuery({ query: '(max-height: 55rem)' })
     const [isSmallSearchView, setIsSmallSearchView] = useState(isShortScreen && hasResult(route))
@@ -49,12 +52,24 @@ export default function ({ query, route, info, error }: MobileSidebarProps) {
                     <SmallSearchView points={query.queryPoints} onClick={() => setIsSmallSearchView(false)} />
                 ) : (
                     <div className={styles.btnCloseContainer}>
+                        <div className={styles.btnCloseInputs} onClick={() => setIsSmallSearchView(true)}>
+                            <CloseInputsIcon />
+                        </div>
                         <RoutingProfiles
-                            routingProfiles={info.profiles}
+                            routingProfiles={query.profiles}
                             selectedProfile={query.routingProfile}
-                            customModelAllowed={false}
-                            customModelEnabled={query.customModelEnabled}
+                            showCustomModelBox={showCustomModelBox}
+                            toggleCustomModelBox={() => setShowCustomModelBox(!showCustomModelBox)}
+                            customModelBoxEnabled={query.customModelEnabled}
                         />
+                        {showCustomModelBox && (
+                            <CustomModelBox
+                                customModelEnabled={query.customModelEnabled}
+                                encodedValues={encodedValues}
+                                customModelStr={query.customModelStr}
+                                queryOngoing={query.currentRequest.subRequests[0]?.state === RequestState.SENT}
+                            />
+                        )}
                         <Search points={query.queryPoints} />
                     </div>
                 )}
@@ -73,10 +88,15 @@ function SmallSearchView(props: { points: QueryPoint[]; onClick: () => void }) {
     const to = props.points[props.points.length - 1]
 
     return (
-        <div className={styles.mapView} onClick={props.onClick}>
-            <SmallQueryPoint text={from.queryText} color={from.color} position={from.type} />
-            <IntermediatePoint points={props.points} />
-            <SmallQueryPoint text={to.queryText} color={to.color} position={to.type} />
+        <div className={styles.btnOpenContainer} onClick={props.onClick}>
+            <div className={styles.btnOpenInputs}>
+                <OpenInputsIcon />
+            </div>
+            <div className={styles.mapView}>
+                <SmallQueryPoint text={from.queryText} color={from.color} position={from.type} />
+                <IntermediatePoint points={props.points} />
+                <SmallQueryPoint text={to.queryText} color={to.color} position={to.type} />
+            </div>
         </div>
     )
 }

@@ -12,7 +12,6 @@ import {
     getSettingsStore,
 } from '@/stores/Stores'
 import MapComponent from '@/map/MapComponent'
-import { ApiInfo } from '@/api/graphhopper'
 import MapOptions from '@/map/MapOptions'
 import MobileSidebar from '@/sidebar/MobileSidebar'
 import { useMediaQuery } from 'react-responsive'
@@ -38,6 +37,11 @@ import useMapBorderLayer from '@/layers/UseMapBorderLayer'
 import { ShowDistanceInMilesContext } from '@/ShowDistanceInMilesContext'
 import RoutingProfiles from '@/sidebar/search/routingProfiles/RoutingProfiles'
 import MapPopups from '@/map/MapPopups'
+import Menu from '@/sidebar/menu.svg'
+import Cross from '@/sidebar/times-solid.svg'
+import PlainButton from '@/PlainButton'
+import useAreasLayer from '@/layers/UseAreasLayer'
+import { Settings } from '@/stores/SettingsStore'
 
 export const POPUP_CONTAINER_ID = 'popup-container'
 export const SIDEBAR_CONTENT_ID = 'sidebar-content'
@@ -96,9 +100,10 @@ export default function App() {
     // our different map layers
     useBackgroundLayer(map, mapOptions.selectedStyle)
     useMapBorderLayer(map, info.bbox)
+    useAreasLayer(map, getCustomModelAreas(query))
     useRoutingGraphLayer(map, mapOptions.routingGraphEnabled)
     useUrbanDensityLayer(map, mapOptions.urbanDensityEnabled)
-    usePathsLayer(map, route.routingResult.paths, route.selectedPath)
+    usePathsLayer(map, route.routingResult.paths, route.selectedPath, query.queryPoints)
     useQueryPointsLayer(map, query.queryPoints)
     usePathDetailsLayer(map, pathDetails)
     const isSmallScreen = useMediaQuery({ query: '(max-width: 44rem)' })
@@ -114,7 +119,7 @@ export default function App() {
                         map={map}
                         mapOptions={mapOptions}
                         error={error}
-                        info={info}
+                        encodedValues={info.encoded_values}
                     />
                 ) : (
                     <LargeScreenLayout
@@ -123,7 +128,7 @@ export default function App() {
                         map={map}
                         mapOptions={mapOptions}
                         error={error}
-                        info={info}
+                        encodedValues={info.encoded_values}
                     />
                 )}
             </div>
@@ -137,39 +142,55 @@ interface LayoutProps {
     map: Map
     mapOptions: MapOptionsStoreState
     error: ErrorStoreState
-    info: ApiInfo
+    encodedValues: object[]
 }
 
-function LargeScreenLayout({ query, route, map, error, mapOptions, info }: LayoutProps) {
+function LargeScreenLayout({ query, route, map, error, mapOptions, encodedValues }: LayoutProps) {
+    const [showSidebar, setShowSidebar] = useState(true)
+    const [showCustomModelBox, setShowCustomModelBox] = useState(false)
     return (
         <>
-            <div className={styles.sidebar}>
-                <div className={styles.sidebarContent} id={SIDEBAR_CONTENT_ID}>
-                    <RoutingProfiles
-                        routingProfiles={info.profiles}
-                        selectedProfile={query.routingProfile}
-                        customModelAllowed={true}
-                        customModelEnabled={query.customModelEnabled}
-                    />
-                    <CustomModelBox
-                        enabled={query.customModelEnabled}
-                        encodedValues={info.encoded_values}
-                        initialCustomModelStr={query.initialCustomModelStr}
-                        queryOngoing={query.currentRequest.subRequests[0]?.state === RequestState.SENT}
-                    />
-                    <Search points={query.queryPoints} />
-                    <div>{!error.isDismissed && <ErrorMessage error={error} />}</div>
-                    <RoutingResults
-                        paths={route.routingResult.paths}
-                        selectedPath={route.selectedPath}
-                        currentRequest={query.currentRequest}
-                        profile={query.routingProfile.name}
-                    />
-                    <div>
-                        <PoweredBy />
+            {showSidebar ? (
+                <div className={styles.sidebar}>
+                    <div className={styles.sidebarContent} id={SIDEBAR_CONTENT_ID}>
+                        <PlainButton onClick={() => setShowSidebar(false)} className={styles.sidebarCloseButton}>
+                            <Cross />
+                        </PlainButton>
+                        <RoutingProfiles
+                            routingProfiles={query.profiles}
+                            selectedProfile={query.routingProfile}
+                            showCustomModelBox={showCustomModelBox}
+                            toggleCustomModelBox={() => setShowCustomModelBox(!showCustomModelBox)}
+                            customModelBoxEnabled={query.customModelEnabled}
+                        />
+                        {showCustomModelBox && (
+                            <CustomModelBox
+                                customModelEnabled={query.customModelEnabled}
+                                encodedValues={encodedValues}
+                                customModelStr={query.customModelStr}
+                                queryOngoing={query.currentRequest.subRequests[0]?.state === RequestState.SENT}
+                            />
+                        )}
+                        <Search points={query.queryPoints} />
+                        <div>{!error.isDismissed && <ErrorMessage error={error} />}</div>
+                        <RoutingResults
+                            paths={route.routingResult.paths}
+                            selectedPath={route.selectedPath}
+                            currentRequest={query.currentRequest}
+                            profile={query.routingProfile.name}
+                        />
+                        <div>
+                            <PoweredBy />
+                        </div>
                     </div>
                 </div>
-            </div>
+            ) : (
+                <div className={styles.sidebarWhenClosed} onClick={() => setShowSidebar(true)}>
+                    <PlainButton className={styles.sidebarOpenButton}>
+                        <Menu />
+                    </PlainButton>
+                </div>
+            )}
             <div className={styles.popupContainer} id={POPUP_CONTAINER_ID} />
             <div className={styles.map}>
                 <MapComponent map={map} />
@@ -185,11 +206,11 @@ function LargeScreenLayout({ query, route, map, error, mapOptions, info }: Layou
     )
 }
 
-function SmallScreenLayout({ query, route, map, error, mapOptions, info }: LayoutProps) {
+function SmallScreenLayout({ query, route, map, error, mapOptions, encodedValues }: LayoutProps) {
     return (
         <>
             <div className={styles.smallScreenSidebar}>
-                <MobileSidebar info={info} query={query} route={route} error={error} />
+                <MobileSidebar query={query} route={route} error={error} encodedValues={encodedValues} />
             </div>
             <div className={styles.smallScreenMap}>
                 <MapComponent map={map} />
@@ -214,4 +235,13 @@ function SmallScreenLayout({ query, route, map, error, mapOptions, info }: Layou
             </div>
         </>
     )
+}
+
+function getCustomModelAreas(queryStoreState: QueryStoreState): object | null {
+    if (!queryStoreState.customModelEnabled) return null
+    try {
+        return JSON.parse(queryStoreState.customModelStr)['areas']
+    } catch {
+        return null
+    }
 }

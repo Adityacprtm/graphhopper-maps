@@ -35,6 +35,10 @@ class ApiMock implements Api {
     routeWithDispatch(args: RoutingArgs): void {
         this.callback(args)
     }
+
+    supportsGeocoding(): boolean {
+        return false
+    }
 }
 
 describe('QueryStore', () => {
@@ -225,7 +229,7 @@ describe('QueryStore', () => {
         })
     })
     describe('InfoReceived action', () => {
-        it('return unchanged state if routing profile was already set', () => {
+        it('keep profile if it was already set', () => {
             const store = new QueryStore(
                 new ApiMock(() => {
                     fail('no routing request when profile was already set.')
@@ -238,6 +242,7 @@ describe('QueryStore', () => {
                 routingProfile: {
                     name: profile,
                 },
+                profiles: [{ name: profile }],
             }
             const newState = store.reduce(
                 state,
@@ -251,7 +256,7 @@ describe('QueryStore', () => {
                 })
             )
 
-            expect(newState).toEqual(state)
+            expect(newState).toEqual({ ...state, profiles: [{ name: 'some-other-profile' }] })
         })
         it('should use the first profile received from info endpoint', () => {
             const expectedProfile = {
@@ -330,7 +335,6 @@ describe('QueryStore', () => {
                 points: [],
                 profile: 'some-profile',
                 customModel: null,
-                zoom: true,
             }
             const subRequest: SubRequest = {
                 state: RequestState.SENT,
@@ -345,7 +349,7 @@ describe('QueryStore', () => {
 
             const newState = store.reduce(
                 state,
-                new RouteRequestSuccess(routingArgs, { paths: [], info: { took: 1, copyright: [] } })
+                new RouteRequestSuccess(routingArgs, true, { paths: [], info: { took: 1, copyright: [] } })
             )
 
             expect(newState.currentRequest.subRequests[0].state).toEqual(RequestState.SUCCESS)
@@ -359,7 +363,6 @@ describe('QueryStore', () => {
                 points: [],
                 profile: 'some-profile',
                 customModel: null,
-                zoom: true,
             }
             const subRequest: SubRequest = {
                 state: RequestState.SENT,

@@ -5,7 +5,8 @@ declare module 'heightgraph/src/heightgraph'
 declare module 'custom-model-editor/src/index'
 
 declare module 'config' {
-    const api: string
+    const routingApi: string
+    const geocodingApi: string
     const defaultTiles: string
     const keys: {
         graphhopper: string
@@ -19,8 +20,9 @@ declare module 'config' {
         snapPreventions: string[]
     }
     const routingGraphLayerAllowed: boolean
-    const extraProfiles: object
+    const profiles: object
 }
+
 declare module 'react-responsive' {
     function useMediaQuery(props: { query: string }): boolean
 }

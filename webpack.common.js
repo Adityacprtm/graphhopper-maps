@@ -24,7 +24,7 @@ module.exports = {
     entry: path.resolve(__dirname, 'src', 'index.tsx'),
     output: {
         path: path.resolve(__dirname, 'dist'),
-        filename: 'bundle.js',
+        filename: 'bundle.[contenthash].js',
     },
     resolve: {
         alias: {
@@ -40,42 +40,47 @@ module.exports = {
                 test: /\.js$/,
                 loader: 'source-map-loader',
             },
-            // load styles from node_modules but leave them un-touched
-            // this is important for codemirror and ol
+            // We use css modules for our own code, which uses .module.css as naming convention.
             {
-                test: /\.css$/,
-                include: path.resolve(__dirname, 'node_modules'),
-                exclude: path.resolve(__dirname, 'src'),
-                use: [{ loader: 'style-loader' }, { loader: 'css-loader' }],
-            },
-            // load styles from sources and apply css modules to them
-            {
-                test: /\.css$/,
+                test: /\.module\.css$/,
                 exclude: path.resolve(__dirname, 'node_modules'),
                 use: [
                     { loader: 'style-loader' },
                     {
                         loader: 'css-loader',
                         options: {
-                            modules: true,
+                            modules: {
+                                localIdentName: '[path][name]__[local]',
+                            },
                         },
                     },
                 ],
             },
+            // All other css files are simply processed without modules.
+            // We use these for some 3rd party dependencies like ol and codemirror.
+            {
+                test: /\.css$/,
+                exclude: /\.module\.css$/,
+                use: [{ loader: 'style-loader' }, { loader: 'css-loader' }],
+            },
             // this loader inlines svg images as react components
             {
                 test: /\.svg$/,
-                exclude: path.resolve(__dirname, 'node_modules/heightgraph'),
+                exclude: path.resolve(__dirname, 'src/pathDetails/img'),
                 use: ['@svgr/webpack'],
             },
-            // heightgraph.css loads svg files using url(), so we need to add them as asset modules
+            // HeightGraph.css loads svg files using url(), so we need to add them as asset modules
             {
                 test: /\.svg$/,
-                include: path.resolve(__dirname, 'node_modules/heightgraph'),
+                include: path.resolve(__dirname, 'src/pathDetails/img'),
                 type: 'asset',
             },
             {
                 test: /\.png$/i,
+                type: 'asset',
+            },
+            {
+                test: /\.ttf$/i,
                 type: 'asset',
             },
         ],

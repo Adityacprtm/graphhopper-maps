@@ -4,7 +4,13 @@ import Dispatcher from '@/stores/Dispatcher'
 import { ClearPoints, SelectMapLayer, SetInitialBBox, SetQueryPoints, SetVehicleProfile } from '@/actions/Actions'
 // import the window like this so that it can be mocked during testing
 import { window } from '@/Window'
-import QueryStore, { Coordinate, QueryPoint, QueryPointType, QueryStoreState } from '@/stores/QueryStore'
+import QueryStore, {
+    Coordinate,
+    getBBoxFromCoord,
+    QueryPoint,
+    QueryPointType,
+    QueryStoreState,
+} from '@/stores/QueryStore'
 import MapOptionsStore, { MapOptionsStoreState } from './stores/MapOptionsStore'
 import { getApi } from '@/api/Api'
 
@@ -28,15 +34,16 @@ export default class NavBar {
 
     private static createUrl(baseUrl: string, queryStoreState: QueryStoreState, mapState: MapOptionsStoreState) {
         const result = new URL(baseUrl)
-        queryStoreState.queryPoints
-            .filter(point => point.isInitialized)
-            .map(point => NavBar.pointToParam(point)) //coordinateToText(point.coordinate))
-            .forEach(pointAsString => result.searchParams.append('point', pointAsString))
+        if (queryStoreState.queryPoints.filter(point => point.isInitialized).length > 0) {
+            queryStoreState.queryPoints
+                .map(point => (!point.isInitialized ? '' : NavBar.pointToParam(point)))
+                .forEach(pointAsString => result.searchParams.append('point', pointAsString))
+        }
 
         result.searchParams.append('profile', queryStoreState.routingProfile.name)
         result.searchParams.append('layer', mapState.selectedStyle.name)
-        if (queryStoreState.customModelEnabled && queryStoreState.customModel && queryStoreState.customModelValid)
-            result.searchParams.append('custom_model', JSON.stringify(queryStoreState.customModel))
+        if (queryStoreState.customModelEnabled)
+            result.searchParams.append('custom_model', queryStoreState.customModelStr.replace(/\s+/g, ''))
 
         return result
     }
@@ -140,7 +147,11 @@ export default class NavBar {
     private static dispatchQueryPoints(points: QueryPoint[]) {
         // estimate map bounds from url points if there are any. this way we prevent loading tiles for the world view
         // only to zoom to the route shortly after
-        const bbox = NavBar.getBBoxFromUrlPoints(points.filter(p => p.isInitialized).map(p => p.coordinate))
+        const initializedPoints = points.filter(p => p.isInitialized)
+        const bbox =
+            initializedPoints.length == 1
+                ? getBBoxFromCoord(initializedPoints[0].coordinate)
+                : NavBar.getBBoxFromUrlPoints(initializedPoints.map(p => p.coordinate))
         if (bbox) Dispatcher.dispatch(new SetInitialBBox(bbox))
         return Dispatcher.dispatch(new SetQueryPoints(points))
     }

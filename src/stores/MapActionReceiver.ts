@@ -57,7 +57,7 @@ export default class MapActionReceiver implements ActionReceiver {
                 widerBBox[1] -= 0.0005
                 widerBBox[3] += 0.0005
             }
-            if (action.request.zoom) fitBounds(this.map, widerBBox, isSmallScreen)
+            if (action.zoom) fitBounds(this.map, widerBBox, isSmallScreen)
         } else if (action instanceof SetSelectedPath) {
             fitBounds(this.map, action.path.bbox!, isSmallScreen)
         } else if (action instanceof PathDetailsRangeSelected) {
@@ -81,6 +81,6 @@ function fitBounds(map: Map, bbox: Bbox, isSmallScreen: boolean, mapSize?: numbe
     const ne = fromLonLat([bbox[2], bbox[3]])
     map.getView().fit([sw[0], sw[1], ne[0], ne[1]], {
         size: mapSize ? mapSize : map.getSize(),
-        padding: isSmallScreen ? [200, 16, 32, 16] : [100, 100, 300, 500],
+        padding: isSmallScreen ? [200, 16, 32, 16] : [100, 100, 200, 500],
     })
 }

@@ -1,9 +1,8 @@
 import React from 'react'
-import styles from './RoutingProfiles.modules.css'
+import styles from './RoutingProfiles.module.css'
 import Dispatcher from '@/stores/Dispatcher'
-import { ClearRoute, DismissLastError, SetCustomModelBoxEnabled, SetVehicleProfile } from '@/actions/Actions'
+import { SetVehicleProfile } from '@/actions/Actions'
 import { RoutingProfile } from '@/api/graphhopper'
-import * as config from 'config'
 import PlainButton from '@/PlainButton'
 import BicycleIcon from './bike.svg'
 import CarIcon from './car.svg'
@@ -17,42 +16,32 @@ import SmallTruckIcon from './small_truck.svg'
 import TruckIcon from './truck.svg'
 import WheelchairIcon from './wheelchair.svg'
 import { tr } from '@/translation/Translation'
-import SettingsSVG from '@/sidebar/settings.svg'
+import CustomModelBoxSVG from '@/sidebar/open_custom_model.svg'
 
 export default function ({
     routingProfiles,
     selectedProfile,
-    customModelAllowed,
-    customModelEnabled,
+    showCustomModelBox,
+    toggleCustomModelBox,
+    customModelBoxEnabled,
 }: {
     routingProfiles: RoutingProfile[]
     selectedProfile: RoutingProfile
-    customModelAllowed: boolean
-    customModelEnabled: boolean
+    showCustomModelBox: boolean
+    toggleCustomModelBox: () => void
+    customModelBoxEnabled: boolean
 }) {
-    // this first merges profiles set from config and those received from the backend.
-    const extraRoutingProfiles: RoutingProfile[] = config.extraProfiles
-        ? Object.keys(config.extraProfiles).map(profile => ({ name: profile }))
-        : []
-    const allRoutingProfiles = routingProfiles.concat(extraRoutingProfiles)
-
     return (
         <div className={styles.profilesParent}>
-            {customModelAllowed && (
-                <PlainButton
-                    title={tr('open_custom_model_box')}
-                    className={customModelEnabled ? styles.enabledSettings : styles.settings}
-                    onClick={() => {
-                        if (customModelEnabled) Dispatcher.dispatch(new DismissLastError())
-                        Dispatcher.dispatch(new ClearRoute())
-                        Dispatcher.dispatch(new SetCustomModelBoxEnabled(!customModelEnabled))
-                    }}
-                >
-                    <SettingsSVG />
-                </PlainButton>
-            )}
+            <PlainButton
+                title={tr('open_custom_model_box')}
+                className={showCustomModelBox ? styles.enabledCMBox : styles.cmBox}
+                onClick={toggleCustomModelBox}
+            >
+                <CustomModelBoxSVG />
+            </PlainButton>
             <ul className={styles.profiles}>
-                {allRoutingProfiles.map(profile => {
+                {routingProfiles.map(profile => {
                     const className =
                         profile.name === selectedProfile.name
                             ? styles.selectedProfile + ' ' + styles.profileBtn
@@ -64,6 +53,9 @@ export default function ({
                                 onClick={() => Dispatcher.dispatch(new SetVehicleProfile(profile))}
                                 className={className}
                             >
+                                {customModelBoxEnabled && profile.name === selectedProfile.name && (
+                                    <CustomModelBoxSVG className={styles.asIndicator} />
+                                )}
                                 {getIcon(profile)}
                             </PlainButton>
                         </li>

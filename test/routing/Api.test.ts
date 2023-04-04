@@ -1,3 +1,6 @@
+/**
+ * @jest-environment node
+ */
 import fetchMock from 'jest-fetch-mock'
 import { ErrorAction, InfoReceived, RouteRequestFailed, RouteRequestSuccess } from '@/actions/Actions'
 import { setTranslation } from '@/translation/Translation'
@@ -24,6 +27,7 @@ afterAll(() => fetchMock.disableMocks())
 describe('info api', () => {
     it('should query correct url and dispatch an InfoReceived action', async () => {
         const ghApi = 'https://some.api/'
+        const geocodingApi = 'https://some.api/'
         const ghKey = 'some-key'
         const expectedUrl = ghApi + 'info?key=' + ghKey
         const expected: ApiInfo = {
@@ -52,15 +56,15 @@ describe('info api', () => {
             )
         })
 
-        const info = await new ApiImpl(ghApi, ghKey).info()
+        const info = await new ApiImpl(ghApi, geocodingApi, ghKey).info()
         // second assert that the request returns the expected payload
         expect(info).toEqual(expected)
     })
 
     it('should issue an error action if anything fails', async () => {
-        const message = 'some error message'
+        const message = 'Could not connect to the Service. Try to reload!'
         fetchMock.mockReject(new Error(message))
-        const api = new ApiImpl('https://some.api/', 'key')
+        const api = new ApiImpl('https://some.api/', 'https://some.api/', 'key')
         await expect(api.info()).rejects.toEqual(new Error(message))
     })
 })
@@ -72,10 +76,10 @@ describe('route', () => {
             maxAlternativeRoutes: 1,
             profile: 'profile',
             customModel: null,
-            zoom: true,
         }
         const mockedDispatcher = jest.spyOn(Dispatcher, 'dispatch')
         const ghApi = 'https://some.api/'
+        const geocodingApi = 'https://some.api/'
         const ghKey = 'key'
 
         fetchMock.mockResponse(request => {
@@ -87,11 +91,11 @@ describe('route', () => {
             return Promise.resolve(JSON.stringify(getEmptyResult()))
         })
 
-        new ApiImpl(ghApi, ghKey).routeWithDispatch(args)
+        new ApiImpl(ghApi, geocodingApi, ghKey).routeWithDispatch(args, true)
         await flushPromises()
 
         expect(mockedDispatcher).toHaveBeenCalledTimes(1)
-        expect(mockedDispatcher).toHaveBeenCalledWith(new RouteRequestSuccess(args, getEmptyResult()))
+        expect(mockedDispatcher).toHaveBeenCalledWith(new RouteRequestSuccess(args, true, getEmptyResult()))
     })
 
     it('transforms routingArgs into routing request with default algorithm for maxAlternativeRoutes: 1', async () => {
@@ -100,7 +104,6 @@ describe('route', () => {
             maxAlternativeRoutes: 1,
             profile: 'car',
             customModel: null,
-            zoom: true,
         }
 
         const expectedBody: RoutingRequest = {
@@ -116,6 +119,7 @@ describe('route', () => {
             details: [
                 'road_class',
                 'road_environment',
+                'road_access',
                 'surface',
                 'max_speed',
                 'average_speed',
@@ -131,11 +135,11 @@ describe('route', () => {
             return compareRequestBodyAndResolve(request, expectedBody)
         })
 
-        new ApiImpl('https://some.api/', 'key').routeWithDispatch(args)
+        new ApiImpl('https://some.api/', 'https://some.api/', 'key').routeWithDispatch(args, true)
         await flushPromises()
 
         expect(mockedDispatcher).toHaveBeenCalledTimes(1)
-        expect(mockedDispatcher).toHaveBeenCalledWith(new RouteRequestSuccess(args, getEmptyResult()))
+        expect(mockedDispatcher).toHaveBeenCalledWith(new RouteRequestSuccess(args, true, getEmptyResult()))
     })
 
     it('transforms routingArgs into routing request with alternative_route algorithm for maxAlternativeRoutes > 1', async () => {
@@ -144,7 +148,6 @@ describe('route', () => {
             maxAlternativeRoutes: 2,
             profile: 'car',
             customModel: null,
-            zoom: true,
         }
 
         const expectedBody: RoutingRequest = {
@@ -160,6 +163,7 @@ describe('route', () => {
             details: [
                 'road_class',
                 'road_environment',
+                'road_access',
                 'surface',
                 'max_speed',
                 'average_speed',
@@ -177,11 +181,11 @@ describe('route', () => {
             return compareRequestBodyAndResolve(request, expectedBody)
         })
 
-        new ApiImpl('https://some.api/', 'key').routeWithDispatch(args)
+        new ApiImpl('https://some.api/', 'https://some.api/', 'key').routeWithDispatch(args, true)
         await flushPromises()
 
         expect(mockedDispatcher).toHaveBeenCalledTimes(1)
-        expect(mockedDispatcher).toHaveBeenCalledWith(new RouteRequestSuccess(args, getEmptyResult()))
+        expect(mockedDispatcher).toHaveBeenCalledWith(new RouteRequestSuccess(args, true, getEmptyResult()))
     })
 
     it('transforms routingArgs into routing request with custom model', async () => {
@@ -197,7 +201,6 @@ describe('route', () => {
                     },
                 ],
             },
-            zoom: true,
         }
 
         const expectedBody: RoutingRequest = {
@@ -213,6 +216,7 @@ describe('route', () => {
             details: [
                 'road_class',
                 'road_environment',
+                'road_access',
                 'surface',
                 'max_speed',
                 'average_speed',
@@ -230,11 +234,11 @@ describe('route', () => {
             return compareRequestBodyAndResolve(request, expectedBody)
         })
 
-        new ApiImpl('https://some.api/', 'key').routeWithDispatch(args)
+        new ApiImpl('https://some.api/', 'https://some.api/', 'key').routeWithDispatch(args, true)
         await flushPromises()
 
         expect(mockedDispatcher).toHaveBeenCalledTimes(1)
-        expect(mockedDispatcher).toHaveBeenCalledWith(new RouteRequestSuccess(args, getEmptyResult()))
+        expect(mockedDispatcher).toHaveBeenCalledWith(new RouteRequestSuccess(args, true, getEmptyResult()))
     })
 
     // i guess this is implicitly tested above, but it is nice to write it down like this.
@@ -247,17 +251,16 @@ describe('route', () => {
             maxAlternativeRoutes: 1,
             profile: 'bla',
             customModel: null,
-            zoom: true,
         }
 
         fetchMock.mockResponseOnce(JSON.stringify(getEmptyResult()))
         const mockedDispatcher = jest.spyOn(Dispatcher, 'dispatch')
 
-        new ApiImpl('https://some.api/', 'key').routeWithDispatch(args)
+        new ApiImpl('https://some.api/', 'https://some.api', 'key').routeWithDispatch(args, true)
         await flushPromises()
 
         expect(mockedDispatcher).toHaveBeenCalledTimes(1)
-        expect(mockedDispatcher).toHaveBeenCalledWith(new RouteRequestSuccess(args, getEmptyResult()))
+        expect(mockedDispatcher).toHaveBeenCalledWith(new RouteRequestSuccess(args, true, getEmptyResult()))
     })
 
     it('should create an action when an error is received', async () => {
@@ -269,7 +272,6 @@ describe('route', () => {
             maxAlternativeRoutes: 1,
             profile: 'bla',
             customModel: null,
-            zoom: true,
         }
 
         const error: ErrorResponse = {
@@ -280,7 +282,7 @@ describe('route', () => {
         fetchMock.mockRejectOnce(() => Promise.resolve(new Response(JSON.stringify(error), { status: 400 })))
         const mockedDispatcher = jest.spyOn(Dispatcher, 'dispatch')
 
-        new ApiImpl('https://some.api/', 'key').routeWithDispatch(args)
+        new ApiImpl('https://some.api/', 'https://some.api/', 'key').routeWithDispatch(args, true)
         await flushPromises()
 
         expect(mockedDispatcher).toHaveBeenCalledTimes(1)
@@ -293,10 +295,11 @@ describe('route', () => {
             points: [],
             maxAlternativeRoutes: 3,
             customModel: null,
-            zoom: true,
         }
         fetchMock.mockResponse(() => Promise.resolve({ status: 500 }))
-        await expect(new ApiImpl('https://some.api/', 'key').route(args)).rejects.toThrow('Route calculation timed out')
+        await expect(new ApiImpl('https://some.api/', 'https://some.api/', 'key').route(args)).rejects.toThrow(
+            'Route calculation timed out'
+        )
     })
 
     it('correct de locale', async () => {
@@ -307,7 +310,6 @@ describe('route', () => {
             maxAlternativeRoutes: 1,
             profile: 'car',
             customModel: null,
-            zoom: true,
         }
 
         const expectedBody: RoutingRequest = {
@@ -323,6 +325,7 @@ describe('route', () => {
             details: [
                 'road_class',
                 'road_environment',
+                'road_access',
                 'surface',
                 'max_speed',
                 'average_speed',
@@ -338,11 +341,11 @@ describe('route', () => {
             return compareRequestBodyAndResolve(request, expectedBody)
         })
 
-        new ApiImpl('https://some.api/', 'key').routeWithDispatch(args)
+        new ApiImpl('https://some.api/', 'https://some.api/', 'key').routeWithDispatch(args, true)
         await flushPromises()
 
         expect(mockedDispatcher).toHaveBeenCalledTimes(1)
-        expect(mockedDispatcher).toHaveBeenCalledWith(new RouteRequestSuccess(args, getEmptyResult()))
+        expect(mockedDispatcher).toHaveBeenCalledWith(new RouteRequestSuccess(args, true, getEmptyResult()))
     })
 })
 

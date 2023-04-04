@@ -4,13 +4,13 @@ A user interface for the [GraphHopper routing engine](https://github.com/graphho
 
 [Try it out](https://graphhopper.com/maps/)!
 
-[![GraphHopper Maps route planner](https://www.graphhopper.com/wp-content/uploads/2022/10/maps2-1024x661.png)](https://graphhopper.com/maps/)
+[![GraphHopper Maps route planner](https://www.graphhopper.com/wp-content/uploads/2023/03/gh-maps-202303.png)](https://graphhopper.com/maps/)
 
 
 ## Start development:
 
  * Clone this repository.
- * Make sure node/npm is installed. We recommend using the gallium LTS (node v16.17.0 & npm v8.15.0).
+ * Make sure node and npm are installed. We recommend using the gallium LTS (node v16.17.0 & npm v8.15.0).
  * npm install
  * npm run serve
  * Open your browser at http://0.0.0.0:3000/.
@@ -42,3 +42,12 @@ Every branch of this repository can be tested at https://graphhopper.com/maps-de
 
 There is also [an experimental `navi` branch](https://github.com/graphhopper/graphhopper-maps/tree/navi) that implements
 turn-by-turn navigation [directly in the browser](https://navi.graphhopper.org).
+
+## Powered By
+
+This project uses
+
+ * the great [OpenLayers library](https://openlayers.org/).
+ * the [codemirror](https://codemirror.net/) code editor for the custom model editor.
+ * many icons from Google's [open source font library](https://fonts.google.com/icons).
+ * many more open source projects - see the package.json
