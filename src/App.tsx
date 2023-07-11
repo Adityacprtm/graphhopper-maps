@@ -41,7 +41,8 @@ import Menu from '@/sidebar/menu.svg'
 import Cross from '@/sidebar/times-solid.svg'
 import PlainButton from '@/PlainButton'
 import useAreasLayer from '@/layers/UseAreasLayer'
-import { Settings } from '@/stores/SettingsStore'
+import useExternalMVTLayer from '@/layers/UseExternalMVTLayer'
+import LocationButton from '@/map/LocationButton'
 
 export const POPUP_CONTAINER_ID = 'popup-container'
 export const SIDEBAR_CONTENT_ID = 'sidebar-content'
@@ -99,8 +100,9 @@ export default function App() {
 
     // our different map layers
     useBackgroundLayer(map, mapOptions.selectedStyle)
+    useExternalMVTLayer(map, mapOptions.externalMVTEnabled)
     useMapBorderLayer(map, info.bbox)
-    useAreasLayer(map, getCustomModelAreas(query))
+    useAreasLayer(map, settings.drawAreasEnabled, query.customModelStr, query.customModelEnabled)
     useRoutingGraphLayer(map, mapOptions.routingGraphEnabled)
     useUrbanDensityLayer(map, mapOptions.urbanDensityEnabled)
     usePathsLayer(map, route.routingResult.paths, route.selectedPath, query.queryPoints)
@@ -120,6 +122,7 @@ export default function App() {
                         mapOptions={mapOptions}
                         error={error}
                         encodedValues={info.encoded_values}
+                        drawAreas={settings.drawAreasEnabled}
                     />
                 ) : (
                     <LargeScreenLayout
@@ -129,6 +132,7 @@ export default function App() {
                         mapOptions={mapOptions}
                         error={error}
                         encodedValues={info.encoded_values}
+                        drawAreas={settings.drawAreasEnabled}
                     />
                 )}
             </div>
@@ -143,9 +147,10 @@ interface LayoutProps {
     mapOptions: MapOptionsStoreState
     error: ErrorStoreState
     encodedValues: object[]
+    drawAreas: boolean
 }
 
-function LargeScreenLayout({ query, route, map, error, mapOptions, encodedValues }: LayoutProps) {
+function LargeScreenLayout({ query, route, map, error, mapOptions, encodedValues, drawAreas }: LayoutProps) {
     const [showSidebar, setShowSidebar] = useState(true)
     const [showCustomModelBox, setShowCustomModelBox] = useState(false)
     return (
@@ -169,6 +174,7 @@ function LargeScreenLayout({ query, route, map, error, mapOptions, encodedValues
                                 encodedValues={encodedValues}
                                 customModelStr={query.customModelStr}
                                 queryOngoing={query.currentRequest.subRequests[0]?.state === RequestState.SENT}
+                                drawAreas={drawAreas}
                             />
                         )}
                         <Search points={query.queryPoints} />
@@ -192,11 +198,12 @@ function LargeScreenLayout({ query, route, map, error, mapOptions, encodedValues
                 </div>
             )}
             <div className={styles.popupContainer} id={POPUP_CONTAINER_ID} />
+            <div className={styles.onMapRightSide}>
+                <MapOptions {...mapOptions} />
+                <LocationButton queryPoints={query.queryPoints} />
+            </div>
             <div className={styles.map}>
                 <MapComponent map={map} />
-            </div>
-            <div className={styles.mapOptions}>
-                <MapOptions {...mapOptions} />
             </div>
 
             <div className={styles.pathDetails}>
@@ -206,18 +213,25 @@ function LargeScreenLayout({ query, route, map, error, mapOptions, encodedValues
     )
 }
 
-function SmallScreenLayout({ query, route, map, error, mapOptions, encodedValues }: LayoutProps) {
+function SmallScreenLayout({ query, route, map, error, mapOptions, encodedValues, drawAreas }: LayoutProps) {
     return (
         <>
             <div className={styles.smallScreenSidebar}>
-                <MobileSidebar query={query} route={route} error={error} encodedValues={encodedValues} />
+                <MobileSidebar
+                    query={query}
+                    route={route}
+                    error={error}
+                    encodedValues={encodedValues}
+                    drawAreas={drawAreas}
+                />
             </div>
             <div className={styles.smallScreenMap}>
                 <MapComponent map={map} />
             </div>
             <div className={styles.smallScreenMapOptions}>
-                <div className={styles.smallScreenMapOptionsContent}>
+                <div className={styles.onMapRightSide}>
                     <MapOptions {...mapOptions} />
+                    <LocationButton queryPoints={query.queryPoints} />
                 </div>
             </div>
 
@@ -235,13 +249,4 @@ function SmallScreenLayout({ query, route, map, error, mapOptions, encodedValues
             </div>
         </>
     )
-}
-
-function getCustomModelAreas(queryStoreState: QueryStoreState): object | null {
-    if (!queryStoreState.customModelEnabled) return null
-    try {
-        return JSON.parse(queryStoreState.customModelStr)['areas']
-    } catch {
-        return null
-    }
 }

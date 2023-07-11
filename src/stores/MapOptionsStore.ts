@@ -1,6 +1,12 @@
 import Store from '@/stores/Store'
 import { Action } from '@/stores/Dispatcher'
-import { MapIsLoaded, SelectMapLayer, ToggleRoutingGraph, ToggleUrbanDensityLayer } from '@/actions/Actions'
+import {
+    MapIsLoaded,
+    SelectMapLayer,
+    ToggleExternalMVTLayer,
+    ToggleRoutingGraph,
+    ToggleUrbanDensityLayer,
+} from '@/actions/Actions'
 import config from 'config'
 
 const osApiKey = config.keys.omniscale
@@ -9,7 +15,7 @@ const thunderforestApiKey = config.keys.thunderforest
 const kurvigerApiKey = config.keys.kurviger
 
 const osmAttribution =
-    '&copy; <a href="http://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors'
+    '&copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a> contributors'
 
 export interface MapOptionsStoreState {
     styleOptions: StyleOption[]
@@ -17,6 +23,7 @@ export interface MapOptionsStoreState {
     isMapLoaded: boolean
     routingGraphEnabled: boolean
     urbanDensityEnabled: boolean
+    externalMVTEnabled: boolean
 }
 
 export interface StyleOption {
@@ -53,11 +60,7 @@ const mapTilerSatellite: VectorStyle = {
 const osmOrg: RasterStyle = {
     name: 'OpenStreetMap',
     type: 'raster',
-    url: [
-        'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
-        'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
-        'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    ],
+    url: ['https://tile.openstreetmap.org/{z}/{x}/{y}.png'],
     attribution: osmAttribution,
     maxZoom: 19,
 }
@@ -208,6 +211,7 @@ export default class MapOptionsStore extends Store<MapOptionsStoreState> {
             styleOptions,
             routingGraphEnabled: false,
             urbanDensityEnabled: false,
+            externalMVTEnabled: false,
             isMapLoaded: false,
         }
     }
@@ -229,6 +233,11 @@ export default class MapOptionsStore extends Store<MapOptionsStoreState> {
             return {
                 ...state,
                 urbanDensityEnabled: action.urbanDensityEnabled,
+            }
+        } else if (action instanceof ToggleExternalMVTLayer) {
+            return {
+                ...state,
+                externalMVTEnabled: action.externalMVTLayerEnabled,
             }
         } else if (action instanceof MapIsLoaded) {
             return {
